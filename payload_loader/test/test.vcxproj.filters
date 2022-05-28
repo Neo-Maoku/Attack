@@ -23,5 +23,8 @@
     <ClInclude Include="CmdlineParser.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="StackArgTool.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
