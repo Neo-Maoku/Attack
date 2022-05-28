@@ -1,17 +1,10 @@
 ﻿#include <windows.h>
 #include <stdio.h>
+#include "Global.h"
 #include "CmdlineParser.hpp"
 #include "StackArgTool.hpp"
 
 using namespace std;
-
-#ifdef _M_IX86
-	#define T DWORD
-	#define PT PDWORD
-#else
-	#define T QWORD
-	#define PT QWORD*
-#endif
 
 void(*p_func)();
 

@@ -168,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CmdlineParser.hpp" />
+    <ClInclude Include="Global.h" />
     <ClInclude Include="StackArgTool.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
