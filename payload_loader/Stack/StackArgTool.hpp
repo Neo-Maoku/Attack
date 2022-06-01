@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <fstream>
 #include <vector>
 #include<sstream>
 
@@ -10,7 +9,6 @@ using namespace std;
 class StackArg
 {
 public:
-	bool m_status = false;
 	int argSum, stackTotal;
 	vector <vector<T>> m_values;
 #ifdef _M_IX86
@@ -19,15 +17,12 @@ public:
 	int typeLength = 8, fillCount = 300;
 #endif
 
-	StackArg(const std::string& shellcodePath)
+	StackArg(const std::string& shellcode)
 	{
-		content = readFileIntoString(shellcodePath);
+		content = shellcode;
+		decode(content);
 
-		if (content != "") {
-			m_status = true;
-
-			argDealWith();
-		}
+		argDealWith();
 	}
 
 	~StackArg()
@@ -98,11 +93,30 @@ protected:
 		return value;
 	}
 
-	string readFileIntoString(const string& path) {
-		ifstream input_file(path);
-		if (!input_file.is_open()) {
-			return "";
+	void decode(string& content)
+	{
+		map<string, string>str;
+		str["q"] = "0";
+		str["w"] = "1";
+		str["e"] = "2";
+		str["r"] = "3";
+		str["t"] = "4";
+		str["y"] = "5";
+		str["u"] = "6";
+		str["o"] = "7";
+		str["p"] = "8";
+		str["a"] = "9";
+		str["s"] = "a";
+		str["d"] = "b";
+		str["f"] = "c";
+		str["g"] = "d";
+		str["h"] = "e";
+		str["j"] = "f";
+
+		int length = content.length();
+		for (int i = 0; i < length; i++)
+		{
+			content.replace(i, 1, str[content.substr(i, 1)]);
 		}
-		return string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
 	}
 };

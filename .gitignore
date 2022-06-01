@@ -5,3 +5,8 @@
 /payload_loader/Debug
 /payload_loader/.vs
 /payload_loader/x64
+/payload_loader/Loader/Release
+/payload_loader/Loader/x64
+/payload_loader/Stack/Release
+/payload_loader/Stack/x64
+/payload_loader/Stack/Debug
